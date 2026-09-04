@@ -7,14 +7,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ---- Force SQLite (bypass .env issues) ----
+# ---- Force SQLite ----
 DATABASE_URL = "sqlite:///expenseflow.db"
-# DATABASE_URL = os.getenv("DATABASE_URL")   # uncomment for PostgreSQL
 
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is required")
 
-# ---- Connection Pooling (SQLite ignores pooling) ----
+# ---- Connection ----
 engine = create_engine(
     DATABASE_URL,
     pool_size=5,
@@ -29,14 +28,13 @@ db_session = scoped_session(SessionLocal)
 Base = declarative_base()
 
 def get_db():
-    """Fast DB session with automatic cleanup."""
     db = db_session()
     try:
         yield db
     finally:
         db.close()
 
-# ---- Models with Indexes ----
+# ---- Models ----
 
 class User(Base):
     __tablename__ = "users"
@@ -48,9 +46,7 @@ class User(Base):
     manager_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     monthly_limit = Column(Float, default=10000.0)
     
-    # Relationships
     manager = relationship("User", remote_side=[id], lazy='joined')
-    # 🔥 FIX: Explicitly specify foreign_keys to resolve ambiguity
     claims = relationship("Claim", foreign_keys="Claim.employee_id", back_populates="employee", lazy='select')
 
 class Claim(Base):
@@ -64,7 +60,7 @@ class Claim(Base):
     category = Column(String(50))
     description = Column(Text, nullable=True)
     status = Column(String(20), default="pending")
-    receipt_fingerprint = Column(String(64), index=True)  # Remove unique=True
+    receipt_fingerprint = Column(String(64), index=True)  # ✅ No unique=True
     created_at = Column(DateTime, default=datetime.utcnow)
     approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     approved_at = Column(DateTime, nullable=True)
@@ -72,17 +68,16 @@ class Claim(Base):
     paid_at = Column(DateTime, nullable=True)
     is_duplicate_flagged = Column(Boolean, default=False)
     
-    # Relationships – using explicit foreign keys
     employee = relationship("User", foreign_keys=[employee_id], lazy='joined')
     approver = relationship("User", foreign_keys=[approved_by], lazy='joined')
     payer = relationship("User", foreign_keys=[paid_by], lazy='joined')
 
-    # Composite indexes for performance
     __table_args__ = (
         Index('idx_claims_status_date', 'status', 'date'),
         Index('idx_claims_employee_status', 'employee_id', 'status'),
         Index('idx_claims_fingerprint_date', 'receipt_fingerprint', 'date'),
     )
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+# ---- IMPORTANT: Drop and recreate tables ----
+Base.metadata.drop_all(bind=engine)      # Remove old tables
+Base.metadata.create_all(bind=engine)    # Create fresh tables
