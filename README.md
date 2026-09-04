@@ -129,3 +129,11 @@ GitHub: Dhayalramesh
 LinkedIn: dhayalsr
 
 Email: dhayal1107@gmail.com
+
+
+# ExpenseFlow - AI-Powered Expense Claim System
+
+## 🌐 Live Demo
+[expenseflow-k2zxjcjxjtfeoarpaaur23.streamlit.app](https://expenseflow-k2zxjcjxjtfeoarpaaur23.streamlit.app)
+
+An intelligent expense claim system that automates receipt parsing, duplicate detection, and multi-role approval workflows.
