@@ -64,7 +64,7 @@ class Claim(Base):
     category = Column(String(50))
     description = Column(Text, nullable=True)
     status = Column(String(20), default="pending")
-    receipt_fingerprint = Column(String(64), unique=True, index=True)
+    receipt_fingerprint = Column(String(64), index=True)  # Remove unique=True
     created_at = Column(DateTime, default=datetime.utcnow)
     approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     approved_at = Column(DateTime, nullable=True)
